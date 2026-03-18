@@ -5,6 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Phaneroo YouTube Date Finder</title>
 
+  <!--
+    ============================================================
+    ANALYTICS — Umami (privacy-friendly, free)
+    ============================================================
+    HOW TO SET THIS UP (takes 2 minutes):
+
+    1. Go to https://cloud.umami.is and create a free account
+    2. Click "Add Website" and enter your GitHub Pages URL
+    3. Umami will give you a script tag — copy ONLY the
+       data-website-id value (looks like a long string of
+       letters and numbers, e.g. "abc123de-...")
+    4. Paste that value below to replace: YOUR-WEBSITE-ID-HERE
+    5. Save the file and push to GitHub — you're done!
+
+    You'll see live stats at https://cloud.umami.is/dashboard
+    ============================================================
+  -->
+  <script
+    defer
+    src="https://cloud.umami.is/script.js"
+    data-website-id="YOUR-WEBSITE-ID-HERE"
+  ></script>
+
   <!-- Google Fonts: Syne (display) + DM Sans (body) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -705,6 +728,28 @@
      I'll explain each section with plain-English comments.
 ============================================================ -->
 <script>
+/* ---- Analytics helper ---------------------------------- */
+
+/**
+ * track(eventName, data)
+ *
+ * Sends a custom event to Umami so you can see not just
+ * page views but specific actions users take.
+ *
+ * How it works:
+ *   - window.umami is the object Umami's script creates
+ *   - We check it exists first (so the app doesn't crash
+ *     if the script hasn't loaded yet, e.g. offline)
+ *   - The 'data' object is optional extra info to attach
+ *
+ * You'll see these in your Umami dashboard under "Events".
+ */
+function track(eventName, data = {}) {
+  if (typeof window.umami !== 'undefined') {
+    window.umami.track(eventName, data);
+  }
+}
+
 /* ---- Helpers ------------------------------------------- */
 
 /**
@@ -1126,6 +1171,8 @@ function exportCsv(videos, channelName, date) {
   a.download = `${channelName.replace(/\s+/g,'_')}_${date}.csv`;
   a.click();
   showToast('CSV downloaded!', 'success');
+  // Track: someone exported results to CSV
+  track('export_csv', { videos_exported: videos.length });
 }
 
 /* ---- Share URL ---------------------------------------- */
@@ -1213,8 +1260,13 @@ async function runSearch() {
 
     if (videos.length > 0) {
       showToast(`Found ${videos.length} video(s)!`, 'success');
+      // Track: a search that returned results
+      // 'videos_found' tells you how many results came back
+      track('search_success', { videos_found: videos.length });
     } else {
       showToast('No videos found on that date.', 'info');
+      // Track: a search that returned zero results
+      track('search_empty');
     }
 
   } catch (err) {
@@ -1238,6 +1290,8 @@ async function runSearch() {
         <button class="btn btn-ghost" onclick="document.getElementById('results').innerHTML=''">Dismiss</button>
       </div>`;
     showToast(msg, 'error');
+    // Track: something went wrong (helps you spot common problems)
+    track('search_error', { reason: msg.slice(0, 80) });
   } finally {
     // Always hide loading state when done
     document.getElementById('loadingWrap').classList.remove('show');
@@ -1322,7 +1376,11 @@ document.getElementById('shareBtn').addEventListener('click', () => {
     document.getElementById('channelInput').value.trim(),
     document.getElementById('dateInput').value
   );
-  navigator.clipboard.writeText(url).then(() => showToast('Share URL copied!', 'success'));
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('Share URL copied!', 'success');
+    // Track: someone shared a search result
+    track('share_url');
+  });
 });
 
 /* ---- Init --------------------------------------------- */

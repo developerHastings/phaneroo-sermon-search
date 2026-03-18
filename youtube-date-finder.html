@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Phaneroo YouTube Date Finder</title>
+
+  <!-- Google Fonts: Syne (display) + DM Sans (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       CSS VARIABLES — one place to change colors/fonts for the
+       whole app. "data-theme" on <html> switches dark/light.
+    ============================================================ */
+    :root {
+      --bg:        #0d0d0f;
+      --surface:   #16161a;
+      --surface2:  #1e1e24;
+      --border:    #2a2a35;
+      --accent:    #ff3d57;       /* red-pink: YouTube-adjacent but fresh */
+      --accent2:   #ff8c42;       /* warm orange for secondary highlights  */
+      --text:      #f0eff4;
+      --text-muted:#8888a0;
+      --radius:    14px;
+      --shadow:    0 8px 40px rgba(0,0,0,.45);
+    }
+    [data-theme="light"] {
+      --bg:        #f4f3f8;
+      --surface:   #ffffff;
+      --surface2:  #ebebf2;
+      --border:    #dddde8;
+      --text:      #111118;
+      --text-muted:#6666808;
+      --shadow:    0 8px 40px rgba(0,0,0,.12);
+    }
+
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background .3s, color .3s;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button { cursor: pointer; font-family: inherit; }
+    input, select { font-family: inherit; }
+
+    /* ============================================================
+       LAYOUT
+    ============================================================ */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* ============================================================
+       HEADER
+    ============================================================ */
+    header {
+      padding: 28px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .logo-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo-text span { color: var(--accent); }
+
+    #themeToggle {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 99px;
+      font-size: .85rem;
+      transition: background .2s;
+    }
+    #themeToggle:hover { background: var(--border); }
+
+    /* ============================================================
+       HERO
+    ============================================================ */
+    .hero {
+      text-align: center;
+      padding: 56px 0 40px;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,61,87,.12);
+      border: 1px solid rgba(255,61,87,.3);
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 99px;
+      margin-bottom: 20px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.2rem, 6vw, 3.6rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -2px;
+      margin-bottom: 14px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+    .hero p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ============================================================
+       API KEY SETUP CARD  (shown when no key is saved)
+    ============================================================ */
+    .setup-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin: 0 0 28px;
+      box-shadow: var(--shadow);
+    }
+    .setup-card h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+    .setup-card p {
+      color: var(--text-muted);
+      font-size: .9rem;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .setup-card ol {
+      color: var(--text-muted);
+      font-size: .88rem;
+      padding-left: 20px;
+      margin-bottom: 18px;
+      line-height: 1.8;
+    }
+    .setup-card ol li a { font-size: .88rem; }
+
+    /* ============================================================
+       FORM CARD
+    ============================================================ */
+    .search-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      margin-bottom: 28px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 580px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+
+    label {
+      display: block;
+      font-size: .8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+    input[type="text"],
+    input[type="date"],
+    input[type="password"],
+    select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--text);
+      padding: 11px 14px;
+      font-size: .95rem;
+      transition: border .2s, box-shadow .2s;
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255,61,87,.15);
+    }
+    /* Fix date input calendar icon color in dark mode */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1) opacity(.5);
+    }
+    [data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: none;
+    }
+
+    /* ============================================================
+       BUTTONS
+    ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 22px;
+      border-radius: 9px;
+      font-size: .95rem;
+      font-weight: 500;
+      border: none;
+      transition: transform .15s, opacity .2s, box-shadow .2s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(255,61,87,.35);
+    }
+    .btn-primary:hover { opacity: .9; box-shadow: 0 6px 24px rgba(255,61,87,.5); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--border); }
+    .btn-sm { padding: 7px 13px; font-size: .82rem; border-radius: 7px; }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* ============================================================
+       RECENT SEARCHES
+    ============================================================ */
+    .recent-section {
+      margin-bottom: 28px;
+    }
+    .recent-section h3 {
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .recent-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .recent-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 5px 13px;
+      font-size: .82rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      white-space: nowrap;
+    }
+    .recent-chip:hover { background: var(--surface2); color: var(--text); }
+
+    /* ============================================================
+       LOADING STATE (skeleton + spinner)
+    ============================================================ */
+    .loading-wrap {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 0;
+      gap: 18px;
+    }
+    .loading-wrap.show { display: flex; }
+    .spinner {
+      width: 42px; height: 42px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: var(--text-muted); font-size: .9rem; }
+    .loading-steps { font-size: .8rem; color: var(--text-muted); }
+
+    /* Skeleton cards */
+    .skeleton-list { display: flex; flex-direction: column; gap: 14px; }
+    .skeleton-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      display: flex; gap: 16px;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    .skeleton-thumb {
+      width: 160px; height: 90px;
+      background: var(--surface2);
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+    .skeleton-lines { flex: 1; display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+    .skeleton-line {
+      height: 14px;
+      background: var(--surface2);
+      border-radius: 6px;
+    }
+    .skeleton-line.short { width: 55%; }
+    .skeleton-line.xshort { width: 35%; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .45; }
+    }
+    @media (max-width: 520px) {
+      .skeleton-thumb { width: 100px; height: 56px; }
+    }
+
+    /* ============================================================
+       RESULTS HEADER  (channel info + stats bar)
+    ============================================================ */
+    .results-header {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 18px;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .results-header.show { display: flex; }
+    .channel-thumb {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 2px solid var(--border);
+    }
+    .channel-info { flex: 1; min-width: 0; }
+    .channel-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .channel-meta { font-size: .82rem; color: var(--text-muted); margin-top: 2px; }
+    .results-stat {
+      background: rgba(255,61,87,.1);
+      border: 1px solid rgba(255,61,87,.2);
+      color: var(--accent);
+      font-size: .82rem;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+    .export-btn-wrap { display: flex; gap: 8px; }
+
+    /* ============================================================
+       VIDEO CARDS
+    ============================================================ */
+    #results { margin-bottom: 60px; }
+    .video-list { display: flex; flex-direction: column; gap: 16px; }
+
+    .video-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      display: flex;
+      gap: 18px;
+      transition: border-color .2s, transform .2s, box-shadow .2s;
+      animation: fadeUp .35s ease both;
+    }
+    .video-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 32px rgba(255,61,87,.12);
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .thumb-wrap {
+      position: relative;
+      flex-shrink: 0;
+      width: 200px;
+      height: 113px;
+    }
+    .thumb-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+    }
+    .duration-badge {
+      position: absolute;
+      bottom: 6px; right: 6px;
+      background: rgba(0,0,0,.8);
+      color: #fff;
+      font-size: .72rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+      letter-spacing: .3px;
+    }
+    .live-badge {
+      position: absolute;
+      top: 6px; left: 6px;
+      background: var(--accent);
+      color: #fff;
+      font-size: .68rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .video-info { flex: 1; min-width: 0; }
+    .video-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.35;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .video-title a { color: var(--text); }
+    .video-title a:hover { color: var(--accent); text-decoration: none; }
+
+    .video-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 14px;
+      margin-bottom: 12px;
+    }
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: .8rem;
+      color: var(--text-muted);
+    }
+    .meta-item svg { opacity: .6; flex-shrink: 0; }
+
+    .video-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    @media (max-width: 580px) {
+      .video-card { flex-direction: column; }
+      .thumb-wrap { width: 100%; height: 0; padding-bottom: 56.25%; }
+      .thumb-wrap img { position: absolute; top:0; left:0; height:100%; }
+    }
+
+    /* ============================================================
+       EMPTY / ERROR STATES
+    ============================================================ */
+    .state-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 50px 28px;
+      text-align: center;
+    }
+    .state-box .icon { font-size: 2.8rem; margin-bottom: 14px; }
+    .state-box h3 { font-family: 'Syne', sans-serif; font-size: 1.2rem; margin-bottom: 8px; }
+    .state-box p { color: var(--text-muted); font-size: .9rem; line-height: 1.6; max-width: 380px; margin: 0 auto 18px; }
+
+    /* ============================================================
+       TOAST NOTIFICATIONS
+    ============================================================ */
+    #toast-container {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      display: flex; flex-direction: column-reverse; gap: 10px;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    .toast {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: .88rem;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      max-width: 320px;
+      pointer-events: all;
+      animation: toastIn .3s ease;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .toast.success { border-color: #22c55e; }
+    .toast.error   { border-color: var(--accent); }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    footer {
+      text-align: center;
+      padding: 24px 0 40px;
+      font-size: .8rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">▶</div>
+      <span class="logo-text">Phaneroo YT <span>Date</span> Finder</span>
+    </div>
+    <button id="themeToggle" title="Toggle dark/light mode">🌙 Dark</button>
+  </header>
+
+  <!-- ===== HERO ===== -->
+  <div class="hero">
+    <div class="hero-badge">🎯 YouTube API v3</div>
+    <h1>Find videos by<br/><em>exact date</em></h1>
+    <p>Enter any YouTube channel and pick a date — we'll find every video published that day.</p>
+  </div>
+
+  <!-- ===== API KEY SETUP (shown until key is saved) ===== -->
+  <div class="setup-card" id="setupCard">
+    <h2>🔑 First time? Add your YouTube API Key</h2>
+    <p>This app talks to YouTube's API directly from your browser. You need a free API key. It only takes 2 minutes:</p>
+    <ol>
+      <li>Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+      <li>Create a project (or pick an existing one)</li>
+      <li>Click <strong>APIs & Services → Enable APIs</strong> → search "YouTube Data API v3" → Enable it</li>
+      <li>Click <strong>APIs & Services → Credentials → Create Credentials → API Key</strong></li>
+      <li>Copy the key and paste it below</li>
+    </ol>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:220px;">
+        <label for="apiKeyInput">Your API Key</label>
+        <input type="password" id="apiKeyInput" placeholder="AIza..." />
+      </div>
+      <div style="display:flex; align-items:flex-end;">
+        <button class="btn btn-primary" id="saveKeyBtn">Save Key</button>
+      </div>
+    </div>
+    <p style="margin-top:12px; font-size:.8rem;">
+      🔒 Your key is saved only in your browser's localStorage — never sent to any server except Google's YouTube API.
+    </p>
+  </div>
+
+  <!-- ===== SEARCH FORM ===== -->
+  <div class="search-card" id="searchCard" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+      <h2 style="font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:700;">Search Videos</h2>
+      <button class="btn btn-ghost btn-sm" id="changeKeyBtn">🔑 Change API Key</button>
+    </div>
+
+    <div class="form-grid">
+      <!-- Channel URL / ID input -->
+      <div class="full">
+        <label for="channelInput">Channel URL or ID</label>
+        <input type="text" id="channelInput"
+          placeholder="e.g. https://youtube.com/@phaneroo  or  UCrEG2rXLpLVSZJntGuHV8fw" />
+      </div>
+
+      <!-- Date picker -->
+      <div>
+        <label for="dateInput">Date</label>
+        <input type="date" id="dateInput" />
+      </div>
+
+      <!-- Timezone selector -->
+      <div>
+        <label for="tzSelect">Timezone (for date filter)</label>
+        <select id="tzSelect">
+          <!-- Filled by JS based on Intl -->
+        </select>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" id="searchBtn">
+        <!-- Search icon (SVG inline) -->
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        Search
+      </button>
+      <button class="btn btn-ghost" id="clearBtn">Clear</button>
+    </div>
+  </div>
+
+  <!-- ===== RECENT SEARCHES ===== -->
+  <div class="recent-section" id="recentSection" style="display:none;">
+    <h3>Recent Searches</h3>
+    <div class="recent-list" id="recentList"></div>
+  </div>
+
+  <!-- ===== LOADING STATE ===== -->
+  <div class="loading-wrap" id="loadingWrap">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Fetching channel info…</div>
+    <!-- Skeleton cards shown while loading -->
+    <div class="skeleton-list" style="width:100%">
+      <div class="skeleton-card">
+        <div class="skeleton-thumb"></div>
+        <div class="skeleton-lines">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-line xshort"></div>
+        </div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-thumb"></div>
+        <div class="skeleton-lines">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-line xshort"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RESULTS HEADER (channel info bar) ===== -->
+  <div class="results-header" id="resultsHeader">
+    <img class="channel-thumb" id="channelThumb" src="" alt="" />
+    <div class="channel-info">
+      <div class="channel-name" id="channelName"></div>
+      <div class="channel-meta" id="channelMeta"></div>
+    </div>
+    <div class="results-stat" id="resultsStat"></div>
+    <div class="export-btn-wrap">
+      <button class="btn btn-ghost btn-sm" id="exportCsvBtn">⬇ CSV</button>
+      <button class="btn btn-ghost btn-sm" id="shareBtn">🔗 Share</button>
+    </div>
+  </div>
+
+  <!-- ===== RESULTS LIST ===== -->
+  <div id="results"></div>
+
+</div><!-- /container -->
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div id="toast-container"></div>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="container">
+    Uses the YouTube Data API v3 · Your API key is stored locally only ·
+    <a href="https://developers.google.com/youtube/v3/getting-started" target="_blank">API Docs</a>
+  </div>
+</footer>
+
+<!-- ============================================================
+     JAVASCRIPT — All the logic lives here.
+     I'll explain each section with plain-English comments.
+============================================================ -->
+<script>
+/* ---- Helpers ------------------------------------------- */
+
+/**
+ * Show a toast (small popup notification) at the bottom of the screen.
+ * type: 'success' | 'error' | 'info'
+ */
+function showToast(msg, type = 'info') {
+  const tc = document.getElementById('toast-container');
+  const t  = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  t.innerHTML = `<span>${icons[type] || ''}</span><span>${msg}</span>`;
+  tc.appendChild(t);
+  // Auto-remove after 3.5 seconds
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+/** Format a number like 1234567 → "1.2M" */
+function fmtNum(n) {
+  if (!n) return '—';
+  n = parseInt(n);
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000)     return (n / 1_000).toFixed(1) + 'K';
+  return n.toString();
+}
+
+/**
+ * Convert ISO 8601 duration (PT4M13S) to a readable string (4:13).
+ * YouTube returns durations in this weird format.
+ */
+function parseDuration(iso) {
+  if (!iso) return '';
+  const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!m) return '';
+  const h = parseInt(m[1] || 0);
+  const min = parseInt(m[2] || 0);
+  const s = parseInt(m[3] || 0);
+  if (h > 0) return `${h}:${String(min).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return `${min}:${String(s).padStart(2,'0')}`;
+}
+
+/** Format a date like "2024-01-15" to "January 15, 2024" */
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+}
+
+/** Format an ISO timestamp to readable date + time */
+function fmtDateTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleString('en-US', {
+    year:'numeric', month:'short', day:'numeric',
+    hour:'2-digit', minute:'2-digit', timeZoneName:'short'
+  });
+}
+
+/* ---- Local Storage helpers ----------------------------- */
+
+const LS_KEY    = 'ytdf_api_key';
+const LS_RECENT = 'ytdf_recent';
+
+function getKey()    { return localStorage.getItem(LS_KEY) || ''; }
+function saveKey(k)  { localStorage.setItem(LS_KEY, k.trim()); }
+
+function getRecent() {
+  try { return JSON.parse(localStorage.getItem(LS_RECENT) || '[]'); } catch { return []; }
+}
+function saveRecent(channel, date) {
+  let r = getRecent();
+  const entry = { channel, date, time: Date.now() };
+  // Remove duplicates then prepend newest
+  r = r.filter(x => !(x.channel === channel && x.date === date));
+  r.unshift(entry);
+  r = r.slice(0, 8); // keep max 8 recent searches
+  localStorage.setItem(LS_RECENT, JSON.stringify(r));
+}
+
+/* ---- YouTube API helpers ------------------------------- */
+
+/**
+ * Extract the channel ID from various YouTube URL formats.
+ *
+ * Supported inputs:
+ *   - UCxxxxxx (raw channel ID, starts with UC)
+ *   - https://youtube.com/channel/UCxxxxxx
+ *   - https://youtube.com/@handle
+ *   - https://youtube.com/user/username
+ *   - https://youtube.com/c/customname
+ *
+ * Returns the raw input if it looks like a channel ID already.
+ */
+async function resolveChannelId(input, apiKey) {
+  input = input.trim();
+
+  // Already a raw channel ID?
+  if (/^UC[\w-]{20,}$/.test(input)) return input;
+
+  // Extract from /channel/UC... URL
+  const chanMatch = input.match(/\/channel\/(UC[\w-]+)/);
+  if (chanMatch) return chanMatch[1];
+
+  // Handle or custom URL → need API lookup
+  let handle = null;
+  const handleMatch = input.match(/\/@([\w.-]+)/);
+  const userMatch   = input.match(/\/user\/([\w.-]+)/);
+  const customMatch = input.match(/\/c\/([\w.-]+)/);
+
+  if (handleMatch) handle = '@' + handleMatch[1];
+  else if (userMatch)   handle = userMatch[1];
+  else if (customMatch) handle = customMatch[1];
+  else handle = input; // treat raw text as handle/username
+
+  // Use YouTube Search API to find the channel
+  // We search by the handle and return the first channel result
+  const url = `https://www.googleapis.com/youtube/v3/search?`
+    + `part=snippet&type=channel&q=${encodeURIComponent(handle)}&maxResults=1&key=${apiKey}`;
+
+  const res = await fetch(url);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  if (!data.items?.length) throw new Error(`Channel not found for: ${handle}`);
+
+  // Try forHandle parameter first (more accurate for @handles)
+  if (handle.startsWith('@')) {
+    const url2 = `https://www.googleapis.com/youtube/v3/channels?`
+      + `part=id&forHandle=${encodeURIComponent(handle)}&key=${apiKey}`;
+    const res2 = await fetch(url2);
+    const data2 = await res2.json();
+    if (data2.items?.length) return data2.items[0].id;
+  }
+
+  return data.items[0].id?.channelId || data.items[0].snippet?.channelId;
+}
+
+/**
+ * Fetch basic channel metadata (name, thumbnail, subscriber count).
+ */
+async function fetchChannelInfo(channelId, apiKey) {
+  const url = `https://www.googleapis.com/youtube/v3/channels?`
+    + `part=snippet,statistics,contentDetails&id=${channelId}&key=${apiKey}`;
+  const res  = await fetch(url);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  if (!data.items?.length) throw new Error('Channel not found.');
+  return data.items[0];
+}
+
+/**
+ * THE KEY TRICK: YouTube gives every channel an "uploads playlist".
+ * The playlist ID is just the channel ID with "UU" instead of "UC".
+ *
+ * Example:
+ *   Channel ID:  UCX6OQ3DkcsbYNE6H8uQQuVA  (MrBeast)
+ *   Playlist ID: UUX6OQ3DkcsbYNE6H8uQQuVA
+ *
+ * We page through this playlist to get ALL uploaded video IDs,
+ * then filter them by publish date.
+ */
+async function fetchVideosByDate(channelId, targetDate, apiKey, progressCb) {
+  // Convert channel ID → uploads playlist ID
+  const uploadsPlaylistId = 'UU' + channelId.slice(2);
+
+  const targetDateStr = targetDate; // "YYYY-MM-DD"
+  let videoIds = [];
+  let pageToken = '';
+  let page = 0;
+  let done = false;
+
+  // YouTube returns videos newest-first. Once we pass the target date
+  // going backwards, we can stop early.
+  while (!done) {
+    page++;
+    progressCb(`Scanning page ${page} of uploads playlist…`);
+
+    let url = `https://www.googleapis.com/youtube/v3/playlistItems?`
+      + `part=snippet,contentDetails&playlistId=${uploadsPlaylistId}`
+      + `&maxResults=50&key=${apiKey}`;
+    if (pageToken) url += `&pageToken=${pageToken}`;
+
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    for (const item of (data.items || [])) {
+      const publishedAt = item.contentDetails?.videoPublishedAt
+                        || item.snippet?.publishedAt;
+      if (!publishedAt) continue;
+
+      // Get just the date portion "YYYY-MM-DD" from the ISO timestamp
+      const videoDate = publishedAt.slice(0, 10);
+
+      if (videoDate === targetDateStr) {
+        // ✅ This video matches our target date
+        videoIds.push(item.contentDetails?.videoId || item.snippet?.resourceId?.videoId);
+      } else if (videoDate < targetDateStr) {
+        // We've gone past our target date (older videos now), stop paging
+        done = true;
+        break;
+      }
+      // If videoDate > targetDateStr, the video is newer than our target — keep looking
+    }
+
+    pageToken = data.nextPageToken || '';
+    if (!pageToken) done = true; // No more pages
+  }
+
+  if (!videoIds.length) return [];
+
+  // Now fetch full metadata for each matched video (title, views, duration, etc.)
+  progressCb(`Loading details for ${videoIds.length} video(s)…`);
+
+  // YouTube allows up to 50 IDs per request
+  const chunks = [];
+  for (let i = 0; i < videoIds.length; i += 50) {
+    chunks.push(videoIds.slice(i, i + 50));
+  }
+
+  let videos = [];
+  for (const chunk of chunks) {
+    const url = `https://www.googleapis.com/youtube/v3/videos?`
+      + `part=snippet,statistics,contentDetails,liveStreamingDetails`
+      + `&id=${chunk.join(',')}&key=${apiKey}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    videos = videos.concat(data.items || []);
+  }
+
+  return videos;
+}
+
+/* ---- Simple cache in memory (clears on page refresh) --- */
+const cache = new Map();
+
+function cacheKey(channelInput, date) {
+  return `${channelInput}__${date}`;
+}
+
+/* ---- Render functions ---------------------------------- */
+
+function renderChannelHeader(channelData, videosFound, date) {
+  const s   = channelData.snippet;
+  const st  = channelData.statistics;
+  const img = s.thumbnails?.default?.url || s.thumbnails?.medium?.url || '';
+
+  document.getElementById('channelThumb').src = img;
+  document.getElementById('channelThumb').alt = s.title;
+  document.getElementById('channelName').textContent = s.title;
+  document.getElementById('channelMeta').textContent =
+    `${fmtNum(st.subscriberCount)} subscribers · ${fmtNum(st.videoCount)} total videos`;
+  document.getElementById('resultsStat').textContent =
+    `${videosFound} video${videosFound !== 1 ? 's' : ''} on ${fmtDate(date)}`;
+
+  document.getElementById('resultsHeader').classList.add('show');
+}
+
+function renderVideos(videos) {
+  const container = document.getElementById('results');
+
+  if (!videos.length) {
+    container.innerHTML = `
+      <div class="state-box">
+        <div class="icon">📭</div>
+        <h3>No videos found on this date</h3>
+        <p>This channel didn't upload any videos on that day. Try a different date or channel.</p>
+      </div>`;
+    return;
+  }
+
+  // Sort by publish time (newest upload of that day first)
+  videos.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt));
+
+  const html = videos.map((v, i) => {
+    const id       = v.id;
+    const sn       = v.snippet;
+    const st       = v.statistics;
+    const cd       = v.contentDetails;
+    const live     = v.liveStreamingDetails;
+    const thumb    = sn.thumbnails?.medium?.url || sn.thumbnails?.default?.url || '';
+    const dur      = parseDuration(cd?.duration);
+    const isLive   = !!live?.actualStartTime;
+    const views    = fmtNum(st?.viewCount);
+    const likes    = fmtNum(st?.likeCount);
+    const comments = fmtNum(st?.commentCount);
+    const pubTime  = fmtDateTime(sn.publishedAt);
+    const ytUrl    = `https://www.youtube.com/watch?v=${id}`;
+
+    return `
+    <div class="video-card" style="animation-delay:${i * 60}ms">
+      <div class="thumb-wrap">
+        <img src="${thumb}" alt="${sn.title.replace(/"/g,'&quot;')}" loading="lazy" />
+        ${isLive ? '<span class="live-badge">🔴 Stream</span>' : ''}
+        ${dur ? `<span class="duration-badge">${dur}</span>` : ''}
+      </div>
+      <div class="video-info">
+        <div class="video-title">
+          <a href="${ytUrl}" target="_blank" rel="noopener">${sn.title}</a>
+        </div>
+        <div class="video-meta">
+          <span class="meta-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            ${views} views
+          </span>
+          <span class="meta-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+            ${likes} likes
+          </span>
+          <span class="meta-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            ${comments} comments
+          </span>
+          <span class="meta-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            ${pubTime}
+          </span>
+        </div>
+        <div class="video-actions">
+          <a href="${ytUrl}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">▶ Watch</a>
+          <button class="btn btn-ghost btn-sm" onclick="copyLink('${ytUrl}')">📋 Copy Link</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = `<div class="video-list">${html}</div>`;
+}
+
+function copyLink(url) {
+  navigator.clipboard.writeText(url).then(() => showToast('Link copied!', 'success'));
+}
+
+/* ---- Timezone selector --------------------------------- */
+
+function populateTimezones() {
+  const sel = document.getElementById('tzSelect');
+  // Get user's local timezone as default
+  const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  // Common timezones list
+  const zones = [
+    'UTC',
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'America/Sao_Paulo',
+    'Europe/London',
+    'Europe/Paris',
+    'Europe/Berlin',
+    'Africa/Nairobi',
+    'Africa/Lagos',
+    'Asia/Dubai',
+    'Asia/Kolkata',
+    'Asia/Singapore',
+    'Asia/Tokyo',
+    'Australia/Sydney',
+    'Pacific/Auckland',
+  ];
+
+  // Make sure local timezone is in the list
+  if (!zones.includes(localTz)) zones.unshift(localTz);
+
+  sel.innerHTML = zones.map(z =>
+    `<option value="${z}" ${z === localTz ? 'selected' : ''}>${z}</option>`
+  ).join('');
+}
+
+/* ---- Recent searches rendering ------------------------ */
+
+function renderRecent() {
+  const recent = getRecent();
+  const section = document.getElementById('recentSection');
+  const list    = document.getElementById('recentList');
+
+  if (!recent.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+
+  list.innerHTML = recent.map(r => `
+    <button class="recent-chip" data-channel="${r.channel}" data-date="${r.date}">
+      📅 ${r.channel.length > 30 ? r.channel.slice(0,30)+'…' : r.channel} · ${fmtDate(r.date)}
+    </button>
+  `).join('');
+
+  // Click on a chip to re-run that search
+  list.querySelectorAll('.recent-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('channelInput').value = btn.dataset.channel;
+      document.getElementById('dateInput').value    = btn.dataset.date;
+      runSearch();
+    });
+  });
+}
+
+/* ---- Export CSV --------------------------------------- */
+
+function exportCsv(videos, channelName, date) {
+  if (!videos.length) return;
+  const rows = [
+    ['Title', 'Video ID', 'URL', 'Published At', 'Views', 'Likes', 'Comments', 'Duration']
+  ];
+  for (const v of videos) {
+    rows.push([
+      `"${(v.snippet.title || '').replace(/"/g,'""')}"`,
+      v.id,
+      `https://www.youtube.com/watch?v=${v.id}`,
+      v.snippet.publishedAt,
+      v.statistics?.viewCount || '',
+      v.statistics?.likeCount || '',
+      v.statistics?.commentCount || '',
+      parseDuration(v.contentDetails?.duration) || '',
+    ]);
+  }
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `${channelName.replace(/\s+/g,'_')}_${date}.csv`;
+  a.click();
+  showToast('CSV downloaded!', 'success');
+}
+
+/* ---- Share URL ---------------------------------------- */
+
+function buildShareUrl(channel, date) {
+  const u = new URL(window.location.href.split('?')[0]);
+  u.searchParams.set('channel', channel);
+  u.searchParams.set('date', date);
+  return u.toString();
+}
+
+function loadFromUrl() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.has('channel') && p.has('date')) {
+    document.getElementById('channelInput').value = p.get('channel');
+    document.getElementById('dateInput').value    = p.get('date');
+    // Auto-run the search after a short delay (so DOM is ready)
+    setTimeout(() => runSearch(), 400);
+  }
+}
+
+/* ---- Main search function ----------------------------- */
+
+let lastResults = [];  // store for CSV export
+let lastChannel = '';
+let lastDate    = '';
+
+async function runSearch() {
+  const channelInput = document.getElementById('channelInput').value.trim();
+  const date         = document.getElementById('dateInput').value;
+  const apiKey       = getKey();
+
+  // Validate inputs
+  if (!channelInput) { showToast('Please enter a channel URL or ID.', 'error'); return; }
+  if (!date)         { showToast('Please select a date.', 'error'); return; }
+  if (!apiKey)       { showToast('Please add your YouTube API key first.', 'error'); return; }
+
+  // Show loading state
+  document.getElementById('loadingWrap').classList.add('show');
+  document.getElementById('results').innerHTML        = '';
+  document.getElementById('resultsHeader').classList.remove('show');
+  document.getElementById('searchBtn').disabled = true;
+
+  const setStatus = (msg) => {
+    document.getElementById('loadingText').textContent = msg;
+  };
+
+  try {
+    // Check cache first
+    const ck = cacheKey(channelInput, date);
+    let channelData, videos;
+
+    if (cache.has(ck)) {
+      ({ channelData, videos } = cache.get(ck));
+      setStatus('Loading from cache…');
+      await new Promise(r => setTimeout(r, 300)); // small delay so UI doesn't flash
+    } else {
+      // Step 1: Resolve the channel ID
+      setStatus('Resolving channel ID…');
+      const channelId = await resolveChannelId(channelInput, apiKey);
+
+      // Step 2: Get channel metadata (name, thumbnail, subs)
+      setStatus('Fetching channel info…');
+      channelData = await fetchChannelInfo(channelId, apiKey);
+
+      // Step 3: Get videos for the target date
+      videos = await fetchVideosByDate(channelId, date, apiKey, setStatus);
+
+      // Cache the result
+      cache.set(ck, { channelData, videos });
+    }
+
+    // Save to recent searches
+    saveRecent(channelInput, date);
+    renderRecent();
+
+    // Render the results
+    renderChannelHeader(channelData, videos.length, date);
+    renderVideos(videos);
+
+    // Store for export
+    lastResults = videos;
+    lastChannel = channelData.snippet.title;
+    lastDate    = date;
+
+    if (videos.length > 0) {
+      showToast(`Found ${videos.length} video(s)!`, 'success');
+    } else {
+      showToast('No videos found on that date.', 'info');
+    }
+
+  } catch (err) {
+    console.error(err);
+    let msg = err.message || 'Unknown error';
+
+    // Give user-friendly messages for common API errors
+    if (msg.includes('quota')) {
+      msg = 'YouTube API quota exceeded. Wait a few hours or use a different API key.';
+    } else if (msg.includes('API key')) {
+      msg = 'Invalid API key. Check your key in Google Cloud Console.';
+    } else if (msg.includes('not found') || msg.includes('404')) {
+      msg = 'Channel not found. Double-check the URL or ID.';
+    }
+
+    document.getElementById('results').innerHTML = `
+      <div class="state-box">
+        <div class="icon">⚠️</div>
+        <h3>Something went wrong</h3>
+        <p>${msg}</p>
+        <button class="btn btn-ghost" onclick="document.getElementById('results').innerHTML=''">Dismiss</button>
+      </div>`;
+    showToast(msg, 'error');
+  } finally {
+    // Always hide loading state when done
+    document.getElementById('loadingWrap').classList.remove('show');
+    document.getElementById('searchBtn').disabled = false;
+  }
+}
+
+/* ---- Dark / Light mode toggle ------------------------- */
+
+function initTheme() {
+  const saved = localStorage.getItem('ytdf_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeBtn(saved);
+}
+
+function updateThemeBtn(theme) {
+  document.getElementById('themeToggle').textContent =
+    theme === 'dark' ? '🌙 Dark' : '☀️ Light';
+}
+
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next    = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('ytdf_theme', next);
+  updateThemeBtn(next);
+});
+
+/* ---- API Key UI --------------------------------------- */
+
+function initKeyUI() {
+  const key = getKey();
+  if (key) {
+    document.getElementById('setupCard').style.display  = 'none';
+    document.getElementById('searchCard').style.display = 'block';
+  } else {
+    document.getElementById('setupCard').style.display  = 'block';
+    document.getElementById('searchCard').style.display = 'none';
+  }
+}
+
+document.getElementById('saveKeyBtn').addEventListener('click', () => {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  if (!k) { showToast('Please enter an API key.', 'error'); return; }
+  saveKey(k);
+  initKeyUI();
+  showToast('API key saved!', 'success');
+});
+
+document.getElementById('changeKeyBtn').addEventListener('click', () => {
+  localStorage.removeItem(LS_KEY);
+  initKeyUI();
+});
+
+/* ---- Search & Clear buttons --------------------------- */
+
+document.getElementById('searchBtn').addEventListener('click', runSearch);
+
+// Allow pressing Enter in inputs to trigger search
+['channelInput', 'dateInput'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') runSearch();
+  });
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  document.getElementById('channelInput').value = '';
+  document.getElementById('dateInput').value    = '';
+  document.getElementById('results').innerHTML  = '';
+  document.getElementById('resultsHeader').classList.remove('show');
+  lastResults = [];
+});
+
+/* ---- Export / Share buttons --------------------------- */
+
+document.getElementById('exportCsvBtn').addEventListener('click', () => {
+  exportCsv(lastResults, lastChannel, lastDate);
+});
+
+document.getElementById('shareBtn').addEventListener('click', () => {
+  const url = buildShareUrl(
+    document.getElementById('channelInput').value.trim(),
+    document.getElementById('dateInput').value
+  );
+  navigator.clipboard.writeText(url).then(() => showToast('Share URL copied!', 'success'));
+});
+
+/* ---- Init --------------------------------------------- */
+
+initTheme();
+initKeyUI();
+populateTimezones();
+renderRecent();
+
+// Set today's date as default in the date picker
+document.getElementById('dateInput').valueAsDate = new Date();
+
+// If the page was opened with ?channel=...&date=... load automatically
+loadFromUrl();
+</script>
+</body>
+</html>
